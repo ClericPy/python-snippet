@@ -1,10 +1,3 @@
-# python-snippet
-Python code-snippets for reusing. Slicer, logger, progressbar, counter, tracer, and so on. 常用的 Python 代码片段，包括切片器、简易Logger生成、进度条、(函数/行)示踪器。练习代码为主，优化以后再考虑pypi。
-
-> 用法大致都在函数或类里的 docstring 里面
-
-```python
-
 
 def init_logger(log_name=__file__, handlers=None, level=1, formatter=None, formatter_str=None):
     '''
@@ -376,7 +369,3 @@ aa()
             cls.last_call = now
             now_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((now)))
             print('%s [Interval, Passed: (%+6s / %+6s)] | Caller: %s (line: %s)' % (now_readable, intervar, passed, sys._getframe(1).f_code.co_name, sys._getframe(1).f_lineno))
-
-
-
-```
