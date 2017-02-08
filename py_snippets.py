@@ -1,3 +1,7 @@
+#! not fit python2.x now
+
+import logging
+
 
 def init_logger(log_name=__file__, handlers=None, level=1, formatter=None, formatter_str=None):
     '''
@@ -33,8 +37,6 @@ custom formatter:
 %(thread)s 线程ID。可能没有
 %(threadName)s 线程名。可能没有
     '''
-    import logging
-
     levels = {'NOTSET': logging.NOTSET, 'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
     if not formatter:
         if formatter_str:
@@ -57,6 +59,8 @@ custom formatter:
 
 # =========================================================================
 
+import sys
+
 
 def progress_bar(items='', inline=False, percent=False, left=False, progress_bar_size=30):
     '''
@@ -76,7 +80,6 @@ for item in progress_bar(range(10),1,1,1,100):
     do_sth = item # 
 
     '''
-    import sys
     length = len(items)
     for x, item in enumerate(items, 1):
         process = ''
@@ -93,6 +96,8 @@ for item in progress_bar(range(10),1,1,1,100):
 
 # =========================================================================
 
+import time
+
 
 def ttime(rawtime=None, tzone=8*3600, fail=''):
     '''
@@ -104,7 +109,6 @@ fail: while raise an error, return fail.
 print(ttime())
 print(ttime(1486572818.4218583298472936253)) # 2017-02-09 00:53:38
     '''
-    import time
     try:
         rawtime = time.time() if rawtime is None else rawtime
         return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(str(rawtime)[:10])+time.timezone+tzone))
