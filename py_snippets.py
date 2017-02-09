@@ -299,18 +299,18 @@ ss()
 example 2: # Trace specified functions by decorator
 tracer = Tracer()
 @tracer
-def dd(a=2):
+def dd(a=1,b=1,c=1):
     pass
 dd()
 time.sleep(0.4687)
-dd()
-dd()
+dd(a=3)
+dd(b=1,c=2)
 time.sleep(0.387)
-dd()
-# 2017-02-09 02:35:20 [    0ms ] | Object: dd (1) 
-# 2017-02-09 02:35:21 [  484ms ] | Object: dd (2) 
-# 2017-02-09 02:35:21 [  484ms ] | Object: dd (3) 
-# 2017-02-09 02:35:21 [  875ms ] | Object: dd (4) 
+dd(5)
+# 2017-02-09 22:22:33 [    0ms ] | Object: dd (1) args:() ; kwargs:{}
+# 2017-02-09 22:22:33 [  469ms ] | Object: dd (2) args:() ; kwargs:{'a': 3}
+# 2017-02-09 22:22:33 [  469ms ] | Object: dd (3) args:() ; kwargs:{'c': 2, 'b': 1}
+# 2017-02-09 22:22:34 [  857ms ] | Object: dd (4) args:(5,) ; kwargs:{}
 ----------------------------
 example 3: # Trace all functions
 def aa(): pass
@@ -346,15 +346,15 @@ aa()
             count = 0
 
             @wraps(f)
-            def d(*args, **argvs):
+            def d(*args, **kwargs):
                 nonlocal count
                 count += 1
                 # print(f.__name__)
                 passed = (time.time()-cls.start_time)
                 passed = '%.3fs' % (passed) if passed > 1 else '%dms' % (passed*1000)
-                now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((time.time())))
-                print('%s [ %+6s ] | Object: %s (%s) ' % (now, passed, f.__name__, count))
-                return f(*args, **argvs)
+                now_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((time.time())))
+                print('%s [ %+6s ] | Object: %s (%s) args:%s ; kwargs:%s' % (now_readable, passed, f.__name__, count, args, kwargs))
+                return f(*args, **kwargs)
             return d
         else:
             def trans_ms(t):
@@ -373,3 +373,47 @@ aa()
             cls.last_call = now
             now_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((now)))
             print('%s [Interval, Passed: (%+6s / %+6s)] | Caller: %s (line: %s)' % (now_readable, intervar, passed, sys._getframe(1).f_code.co_name, sys._getframe(1).f_lineno))
+
+# =========================================================================
+
+
+from functools import wraps
+
+
+def retry(n=3, stop=False, log=False):
+    '''
+decorator for retrying
+重试器（装饰器）
+n: retry n times
+stop: retry n times but still failed, then continue running if stop=False
+log: set it True will show log while retrying
+
+- example:
+@retry(1,0,1)
+def test(a=3):
+    a/0 
+    pass
+
+test()
+# 2017-02-09 23:12:41 | Object: test (retry: 0) args:() ; kwargs:{}; error: division by zero;
+# 2017-02-09 23:12:41 | Object: test (retry: 1) args:() ; kwargs:{}; error: division by zero;
+    '''
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            for _ in range(n+1):
+                try:
+                    return f(*args, **kwargs)
+                except Exception as e:
+                    error = e
+                    if log:
+                        now_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((time.time())))
+                        print('%s | Object: %s (retry: %s) args:%s ; kwargs:%s; error: %s;' % (now_readable, f.__name__, _, args, kwargs, error))
+            else:
+                if stop:
+                    raise error
+        return wrapper
+    return decorator
+
+# =========================================================================
+
