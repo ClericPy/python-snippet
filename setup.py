@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 # python setup.py bdist_wheel upload
 setup(
     name='py_snippets',
-    version='0.0.1',
+    version='0.0.2',
     keywords=('daily practice python code snippets'),
     description='daily practice python code snippets for reusing.',
     license='MIT License',

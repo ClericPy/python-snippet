@@ -14,7 +14,8 @@ import time
 # run in command line, all progress_bar show in one line without newline.
 for item in progress_bar(range(10),1,1,1,100):
     time.sleep(.5)
-    do_sth = item # '''
+    do_sth = item # 
+    '''
 
 
 def progress_bar(items='', inline=False, percent=False, left=False,

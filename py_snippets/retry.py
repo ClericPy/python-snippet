@@ -1,5 +1,5 @@
 from functools import wraps
-
+import time
 __doc__ = '''decorator for retrying
 重试器（装饰器）
 n: retry n times
