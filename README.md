@@ -113,31 +113,29 @@ test()
 
 ```python
 from py_snippets.saver import Saver
+db = Saver() # path maybe default not set
 
-# example 1:
-ss = Saver()
-d = 'ddd'
-ss.x = d
-a = 'aaa'
-ss.x = a
-def custom_func(arg):
-    return arg
-ss.set('custom', custom_func)
-somewhere_custom = ss.get('custom')
-print(somewhere_custom)  # <function custom_func at 0x02E9B8E8>
-ss.show()
-# {'a': 'aaa', 'custom': <function custom_func at 0x030DB8E8>, 'd': 'ddd'}
-# ss.shutdown()
-# example 2:
-ss = Saver('same_key')
-d = {'ddd':333}
-ss.x = d
-a= {'aaa':345}
-ss.x = a
-ss.show()
-# {'same_key': 'aaa'}
-reuse = ss.x
-print(reuse)
+# it's easy use but slowwwwwwww
+for i in range(5):
+    db[str(i)] = i
+
+# it's for massive keys, fast
+db.update({'a':'a'})
+db.update(**{'b':'b'})
+
+print(db.keys())
+# {'a', '2', '4', '1', 'b', '3', '0'}
+print(db.items())
+# {('0', 0), ('4', 4), ('b', 'b'), ('3', 3), ('1', 1), ('a', 'a'), ('2', 2)}
+print(db.values())
+# [0, 1, 2, 3, 4, 'a', 'b']
+print(len(db), db.pop('4'), len(db))
+# 7 4 6
+print(len(db), db.popitem(), len(db))
+# 6 ('0', 0) 5
+print(db.info)
+# {'keys': 5, 'file_size': '3.0 KB'}
+# db.clear() # will delete all files
 ```
 
 ### 5. slicer

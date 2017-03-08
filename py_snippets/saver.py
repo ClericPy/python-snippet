@@ -1,62 +1,68 @@
-import time
 
 __doc__ = '''
-    key: set None to use variable key dynamically; or set a key with str.
-    db: shelve(non-cross-platform:built-ins), sqiltedict(thread-safe:good)
-    path: db file path.
-    One Saver instance use same file path
-    # example 1:
-        ss = Saver()
-        d = 'ddd'
-        ss.x = d
-        a = 'aaa'
-        ss.x = a
-        def custom_func(arg):
-            return arg
-        ss.set('custom', custom_func)
-        somewhere_custom = ss.get('custom')
-        print(somewhere_custom)  # <function custom_func at 0x02E9B8E8>
-        ss.show()
-        # {'a': 'aaa', 'custom': <function custom_func at 0x030DB8E8>, 'd': 'ddd'}
-        # ss.shutdown()
-    # example 2:
-        ss = Saver('same_key')
-        d = {'ddd':333}
-        ss.x = d
-        a= {'aaa':345}
-        ss.x = a
-        ss.show()
-        # {'same_key': 'aaa'}
-        reuse = ss.x
-        print(reuse)
-'''
+db = Saver() # path maybe default not set
 
+# it's easy use but slowwwwwwww
+for i in range(5):
+    db[str(i)] = i
+
+# it's for massive keys, fast
+db.update({'a':'a'})
+db.update(**{'b':'b'})
+
+print(db.keys())
+# {'a', '2', '4', '1', 'b', '3', '0'}
+print(db.items())
+# {('0', 0), ('4', 4), ('b', 'b'), ('3', 3), ('1', 1), ('a', 'a'), ('2', 2)}
+print(db.values())
+# [0, 1, 2, 3, 4, 'a', 'b']
+print(len(db), db.pop('4'), len(db))
+# 7 4 6
+print(len(db), db.popitem(), len(db))
+# 6 ('0', 0) 5
+print(db.info)
+# {'keys': 5, 'file_size': '3.0 KB'}
+# db.clear() # will delete all files
+
+'''
 
 class Saver(object):
 
     """
-    key: set None to use variable key dynamically; or set a key with str.
-    db: shelve(non-cross-platform:built-ins), sqiltedict(thread-safe:good)
-    path: db file path.
-    One Saver instance use same file path
+    Persistent dict.
+    path: mode file path.
+    mode: shelve(non-cross-platform:built-ins), sqiltedict(thread-safe:good)
     """
 
-    def __init__(self, key=None, db='shelve', path=None):
-        super(Saver, self).__init__()
-        self.key = key
-        self.db = db
-        self.path = path or 'saver_db'
-        if db == 'shelve':
+    def __init__(self, path='saver.db', mode=None):
+        self.mode = mode
+        self.path = path
+        self.init_db()
+
+    def init_db(self):
+        if not self.mode:
+            try:
+                import sqlitedict
+                self.mode = 'sqlitedict'
+            except ImportError:
+                print('sqlitedict not found, use shelve.')
+                self.mode = 'shelve'
+        if self.mode == 'sqlitedict':
+            import sqlitedict
+            self.db_open = sqlitedict.SqliteDict
+            self.db_files = [self.path] if self.path else []
+            self.db_commit = lambda x: x.commit()
+            return
+        if self.mode == 'shelve':
             import shelve
             self.db_open = shelve.open
             self.db_files = ['%s%s' % (self.path, ext)
                              for ext in ('', '.dat', '.bak', '.dir')]
             self.db_commit = lambda x: x.sync()
-        if db == 'sqlitedict':
-            import sqlitedict
-            self.db_open = sqlitedict.SqliteDict
-            self.db_files = [self.path] if self.path else []
-            self.db_commit = lambda x: x.commit()
+            return
+
+        raise ImportError(
+            'Invalid mode param, only support sqlitedict or shelve.')
 
     def extract_key(self, obj):
         import sys
@@ -68,6 +74,81 @@ class Saver(object):
             print(probable_key, 'invalid key')
             raise BaseException('obj should be unique for finding arg name')
 
+    def __len__(self):
+        return len(self.dict)
+
+    def clear(self):
+        self.shutdown()
+        # with self.db_open(self.path) as s:
+        #     s.clear()
+        #     self.db_commit(s)
+        # if self.mode == 'sqlitedict':
+        #     import sqlite3
+        #     conn = sqlite3.connect(self.path)
+        #     conn.execute("VACUUM")
+        #     conn.execute("VACUUM")
+        #     conn.close()
+
+    def keys(self):
+        with self.db_open(self.path) as s:
+            return set(s.keys())
+
+    def items(self):
+        with self.db_open(self.path) as s:
+            return set(s.items())
+
+    def values(self):
+        with self.db_open(self.path) as s:
+            return list(s.values())
+
+    def pop(self, key):
+        with self.db_open(self.path) as s:
+            item = s.pop(key)
+            self.db_commit(s)
+            return item
+
+    def popitem(self):
+        with self.db_open(self.path) as s:
+            item = s.popitem()
+            self.db_commit(s)
+            return item
+
+    def __getitem__(self, key):
+        with self.db_open(self.path) as s:
+            if key in s:
+                return s[key]
+        raise KeyError
+
+    def get(self, key, default=None):
+        with self.db_open(self.path) as s:
+            return s[key] if key in s else default
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def set(self, key, value):
+        with self.db_open(self.path) as s:
+            s[key] = value
+            self.db_commit(s)
+
+    def __delitem__(self, key):
+        try:
+            self.delete(key)
+        except KeyError:
+            print('not found key: %s' % key)
+
+    def delete(self, key):
+        with self.db_open(self.path) as s:
+            del s[key]
+            self.db_commit(s)
+
+    def update(self, new_dict=None, **kwargs):
+        new_dict = new_dict or {}
+        with self.db_open(self.path) as s:
+            s.update(new_dict)
+            s.update(kwargs)
+            self.db_commit(s)
+
     def shutdown(self):
         import os
         for fn in self.db_files:
@@ -76,45 +157,31 @@ class Saver(object):
             except:
                 pass
 
-    def clear(self, remove=False):
-        if remove:
-            self.shutdown()
+    def __contains__(self, key):
+        '''Return key in self. Sometimes maybe not work.'''
         with self.db_open(self.path) as s:
-            s.clear()
+            if key in s:
+                return True
+            return False
 
-    def __dict__(self):
+    @property
+    def dict(self):
         with self.db_open(self.path) as s:
             return dict(s)
 
-    def show(self):
-        print(self.__dict__())
-
-    def get(self, key, fail=None):
-        with self.db_open(self.path) as s:
-            return s[key] if key in s else fail
-
-    def set(self, key, value):
-        with self.db_open(self.path) as s:
-            s[key] = value
-            self.db_commit(s)
-
-    def delete(self, key):
-        with self.db_open(self.path) as s:
-            del s[key]
-            self.db_commit(s)
+    def __str__(self):
+        '''return json.dumps'''
+        import json
+        return json.dumps(self.dict, ensure_ascii=False)
 
     @property
-    def x(self):
-        if not self.key:
-            raise KeyError('Use self.get while key is None')
-        return self.get(self.key)
-
-    @x.setter
-    def x(self, value):
-        key = self.key or self.extract_key(value)
-        self.set(key, value)
-
-    @x.deleter
-    def x(self, value):
-        key = self.key or self.extract_key(value)
-        self.delete(key)
+    def info(self):
+        import os
+        f_size = 0
+        for fn in self.db_files:
+            try:
+                f_size += os.path.getsize(fn)
+            except:
+                pass
+        info = {'file_size':'%s KB'%round(f_size/1024,2),'keys':len(self.keys())}
+        return info
