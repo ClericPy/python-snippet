@@ -42,7 +42,7 @@ Read more from model __doc__.
             x*100/length, 2)) if percent else '%s %s / %s' % (process, x, length)
         left_msg = ' (-%s)' % (length-x) if left else ''
         msg = '%s%s%s' % (
-            msg, left_msg, '\r'*len(msg)) if inline else '%s\n' % msg
+            msg, left_msg, '\r') if inline else '%s\n' % msg
         sys.stderr.write(msg)
         yield item
     sys.stderr.write('\n\n')
