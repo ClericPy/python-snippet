@@ -65,7 +65,7 @@ from py_snippets.init_logger import init_logger
 # example:
 def test():
     # logger = init_logger() # default config for command line INFO logger.
-    logger = init_logger(handlers=[['', 'info'],['error.log','error'],['custom.log',21]])
+    logger = init_logger(path_levels=[['', 'info'],['error.log','error'],['custom.log',21]])
     logger.info('info')
     logger.error('error')
 test()
@@ -89,6 +89,18 @@ for item in progress_bar(range(10),1,1,1,30):
     do_sth = item 
 # ■■■■■■■■■□□□□□□□□□□□□□□□□□□□□□ 30.0% (-7)
 ```
+> print_inline function: use it under terminal.
+
+```python
+import time
+
+for i in range(10):
+    print_inline(str(i)*(10-i))
+    time.sleep(.5)
+
+```
+
+
 ### 4. retry
 
 > simple retry tool for functions.
@@ -176,11 +188,15 @@ print(list(Slicer((3,1,2,3,1,2,3)).unique()))
 > read timestamp
 
 ```python
-from py_snippets.times import Times
-tt = Times()
-print(tt.ttime()) # 2017-02-14 00:34:11
-print(tt.timeago()) # 47 年 1 月 25 天 16 小时 34 分钟 11 秒
-print(tt.timeago(start=-3, lang='')) # 16 hours 34 mins 11 s
+print(Times.ttime())
+print(Times.ttime(0))
+print(Times.timeago())
+print(Times.timeago(start=-3, lang=''))
+# 2017-03-25 00:17:04
+# 1970-01-01 08:00:00
+# 47 年 3 月 4 天 16 小时 17 分钟 4 秒
+# 16 hours 17 mins 4 s
+
 ```
 
 ### 7. tracer

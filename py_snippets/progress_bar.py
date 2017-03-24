@@ -4,7 +4,7 @@ __doc__ = ''' Progress bar
  进度条，暂时不打算show_time
 - items: one iterator, used for loop and yield one by one.
 - inline: while running in command line, all progress_bar show in one line without newline.
-  Lose effect for print/sys.stderr/sys.stdout. 
+  Lose effect for print. 
 - percent: show process by percent or counts/length.
 - left: show number of not done.
 - progress_bar_size: the length of progress_bar graph. Set less than screen width.
@@ -18,12 +18,16 @@ for item in progress_bar(range(10),1,1,1,100):
     '''
 
 
+def print_inline(string):
+    'As function name said...'
+    print('\033[K%s\r'%string,end='',flush=1)
+
+
 def progress_bar(items='', inline=False, percent=False, left=False,
                  progress_bar_size=30):
     '''Args:
 - items: one iterator, used for loop and yield one by one.
 - inline: while running in command line, all progress_bar show in one line without newline.
-  Lose effect for print/sys.stderr/sys.stdout. 
 - percent: show process by percent or counts/length.
 - left: show number of not done.
 - progress_bar_size: the length of progress_bar graph. Set less than screen width.
@@ -43,6 +47,6 @@ Read more from model __doc__.
         left_msg = ' (-%s)' % (length-x) if left else ''
         msg = '%s%s%s' % (
             msg, left_msg, '\r') if inline else '%s\n' % msg
-        sys.stderr.write(msg)
+        print_inline(msg)
         yield item
-    sys.stderr.write('\n\n')
+    print('\n\n')

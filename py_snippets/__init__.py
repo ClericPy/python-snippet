@@ -6,3 +6,12 @@
 # print(__all__)
 __all__ = ['asyncme', 'init_logger', 'progress_bar',
            'retry', 'slicer', 'times', 'tracer']
+
+def for_goto_definition_in_IDE():
+    import asyncme
+    import init_logger
+    import progress_bar
+    import retry
+    import slicer
+    import times
+    import tracer
